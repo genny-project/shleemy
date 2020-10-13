@@ -1,0 +1,54 @@
+version: '2.3'
+
+services:
+  mysql:
+    image: gennyproject/mysql:8x 
+    container_name: mysql
+    environment:
+      - MYSQL_URL=mysql
+      - MYSQL_DB=gennydb
+      - MYSQL_PORT=3306
+      - MYSQL_ALLOW_EMPTY=
+      - MYSQL_DATABASE=gennydb
+      - MYSQL_USER=genny
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=password
+    volumes:
+      - mysql_data:/var/lib/mysql:delegated
+    networks:
+      - mainproxy
+    ports:
+      - 3310:3306
+    command: --sql_mode=""
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+
+#docker run -it --rm=true --name elasticsearch_quarkus_test -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+#  elasticsearch:
+#    image:  docker.elastic.co/elasticsearch/elasticsearch:7.5.2 
+#    container_name: elasticsearch 
+#    environment:
+#      - discovery.type=single-node 
+#    networks:
+#      - mainproxy
+#    ports:
+#      - 9200:9200
+#      - 9300:9300 
+#    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  minio_conf:
+  minio_data:
+  maildata:
+    driver: local
+  mailstate:
+    driver: local
+networks:
+  mainproxy:
+    driver: bridge
