@@ -73,16 +73,14 @@ On_ICyan='\033[0;106m'    # Cyan
 On_IWhite='\033[0;107m'   # White
 if [ $# -ne 4 ]
 then
-   echo "usage: addNote.sh <serverUl> <BASEENTITYCODE> <message> <tag>"
-   echo "e.g. ./addNote.sh http://localhost :8095 PER_USER1 'Hello everyone' phone "
+   echo "usage: addScheduleMessage.sh <serverUl> cron "
+   echo "e.g. ./addScheduleMessage.sh http://localhost:8095 '0 30 12 30 6 ? 2020' "
    exit;
 fi
 mydate=`date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
-key=$2
-message=$3
-tag=$4
+cron=$2
 url=$1
-echo ${mydate} ${url}  $key $message $tag
+echo ${mydate} ${url}  $cron 
 access_token=$(\
     curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token \
     --user backend:6781baee-3b97-4b01-bcd4-b14aecd38fd8 \
@@ -96,8 +94,7 @@ TOKEN=$access_token
 echo $TOKEN
 echo $url
 echo ""
-CR=`curl -X POST "${url}/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  -d "{\"id\":0,\"content\":\"${message}\",\"created\":\"${mydate}\",\"sourceCode\":\"PER_USER1\",\"tags\":[{\"name\":\"${tag}\",\"value\":0}],\"targetCode\":\"${key}\",\"updated\":\"${mydate}\"}"`
-#CR=`curl -X POST "https://internmatch-cyrus.gada.io/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  -d "{\"id\":0,\"content\":\"${message}\",\"created\":\"${mydate}\",\"sourceCode\":\"PER_USER1\",\"tags\":\"${tag}:0\",\"targetCode\":\"${key}\",\"updated\":\"${mydate}\"}"`
+CR=`curl -X POST "${url}/api/schedules"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  `
 echo -e "${Green}${CR}${Color_Off}\n"
 echo ""
 echo ""
