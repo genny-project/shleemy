@@ -61,6 +61,8 @@ public class QScheduleMessage extends PanacheEntity {
 
 	@NotEmpty
 	public String channel;
+	
+	public String token;
 
 
 	public QScheduleMessage() {

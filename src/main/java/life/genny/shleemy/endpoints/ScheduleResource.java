@@ -23,12 +23,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
+import org.quartz.SchedulerException;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.security.identity.SecurityIdentity;
 import life.genny.shleemy.models.GennyToken;
 import life.genny.shleemy.models.QScheduleMessage;
+import life.genny.shleemy.quartz.TaskBean;
 
 @Path("/api/schedule")
 @Produces(MediaType.APPLICATION_JSON)
@@ -46,6 +48,9 @@ public class ScheduleResource {
 
 	@Inject
 	JsonWebToken accessToken;
+	
+	@Inject
+	TaskBean taskBean;
 
 	@OPTIONS
 	public Response opt() {
@@ -60,12 +65,21 @@ public class ScheduleResource {
 		log.info("User is "+userToken.getEmail());
 		scheduleMessage.realm = userToken.getRealm();
 		scheduleMessage.sourceCode = userToken.getUserCode(); // force
-
+		scheduleMessage.token = userToken.getToken();
 		scheduleMessage.persist();
 		
 
-		URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById").build(scheduleMessage.id);
-		return Response.created(uri).build();
+		try {
+			taskBean.addSchedule(scheduleMessage, scheduleMessage.cron, userToken);
+			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById").build(scheduleMessage.id);
+			return Response.created(uri).build();
+
+		} catch (SchedulerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return Response.status(Status.BAD_REQUEST).entity("ScheduleMessage did not schedule").build();
+
 	}
 
 
