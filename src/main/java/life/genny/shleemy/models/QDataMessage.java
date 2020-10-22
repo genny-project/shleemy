@@ -1,4 +1,4 @@
-package life.genny.notes.models;
+package life.genny.shleemy.models;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 

@@ -1,10 +1,13 @@
-package life.genny.notes.models;
+package life.genny.shleemy.models;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import javax.json.JsonObject;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbTypeAdapter;
 import javax.persistence.Cacheable;
@@ -22,74 +25,54 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.jboss.logging.Logger;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Parameters;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import life.genny.notes.utils.LocalDateTimeAdapter;
+import life.genny.shleemy.utils.LocalDateTimeAdapter;
 
 @Entity
 @Cacheable
-@Table(name = "parentnote")
+@Table(name = "schedulemessage")
 @RegisterForReflection
-public class ParentNote extends PanacheEntity {
+public class QScheduleMessage extends PanacheEntity {
 
-	 private static final Logger log = Logger.getLogger(ParentNote.class);	
+	 private static final Logger log = Logger.getLogger(QScheduleMessage.class);	
+	 private static final String DEFAULT_TAG = "default";
 
 	@JsonbTypeAdapter(LocalDateTimeAdapter.class)
 	public LocalDateTime created = LocalDateTime.now(ZoneId.of("UTC"));
 	@JsonbTypeAdapter(LocalDateTimeAdapter.class)
 	public LocalDateTime updated;
-// 
+
+	
 	@NotEmpty
-	@JsonbTransient
+	public String cron;
+		
+	@NotEmpty
 	public String realm;
 
+	@NotEmpty
+	public String jsonMessage;
+	
 	
 	@NotEmpty
-	public String code;
+	public String sourceCode;
+
+	@NotEmpty
+	public String channel;
 
 
-	@ElementCollection(fetch=FetchType.EAGER)
-	@Column(name = "note_users")
-    @CollectionTable(name = "note_reg_users")
-	@JoinColumn(name = "noteuser_id")
-	@OnDelete(action= OnDeleteAction.CASCADE)
-	@JsonbTransient
-	public Set<String> noteUsers = new HashSet<>();
-
-
-
-	public ParentNote() {
+	public QScheduleMessage() {
     }
 
-	public ParentNote(final String realm, final String code, final String noteUser)
-	{
-		this.realm = realm;
-		this.code = code;
-		noteUsers.add(noteUser);
-	}
-	
-	public static ParentNote findById(Long id) {
+	public static QScheduleMessage findById(Long id) {
 		return find("id", id).firstResult();
 	}
-	
-	public static ParentNote findByCode(String code) {
-		ParentNote pn = null;
-		
-		try {
-			pn = find("code", code).firstResult();
-		} catch (Exception e) {
-			
-		}
-		
-		return pn;
-	}
-
 
 	public static long deleteById(final Long id) {
 		return delete("id", id);
 	}
 
-	public static long deleteByCode(final String code) {
-		return delete("code", code);
-	}
 
 }

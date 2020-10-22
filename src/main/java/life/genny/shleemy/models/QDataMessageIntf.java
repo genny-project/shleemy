@@ -1,4 +1,4 @@
-package life.genny.notes.models;
+package life.genny.shleemy.models;
 
 public interface QDataMessageIntf {
 	public String getData_type();

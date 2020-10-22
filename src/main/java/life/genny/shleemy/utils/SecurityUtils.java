@@ -1,16 +1,13 @@
-package life.genny.notes.utils;
+package life.genny.shleemy.utils;
 
 
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
 
 import io.jsonwebtoken.JwtBuilder;
@@ -18,11 +15,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.InvalidKeyException;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import life.genny.notes.models.Note;
 
 @RegisterForReflection
 public class SecurityUtils {
-	 private static final Logger log = Logger.getLogger(Note.class);	
+	 private static final Logger log = Logger.getLogger(SecurityUtils.class);	
 
 //	public static String encrypt(String key, String initVector, String value) {
 //		try {

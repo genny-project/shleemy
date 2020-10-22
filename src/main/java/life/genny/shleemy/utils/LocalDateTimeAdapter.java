@@ -1,4 +1,4 @@
-package life.genny.notes.utils;
+package life.genny.shleemy.utils;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
