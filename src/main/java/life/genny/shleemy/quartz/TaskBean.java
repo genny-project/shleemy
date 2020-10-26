@@ -64,6 +64,12 @@ public class TaskBean {
 				.withSchedule(cronSchedule(scheduleMessage.realm+":"+scheduleMessage.sourceCode+":"+userToken.getEmail(),
                         cron)).build();
 		
+//		SimpleTrigger trigger = (SimpleTrigger) newTrigger() 
+//			    .withIdentity("trigger1", "group1")
+//			    .startAt(myStartTime) // some Date date 30.06.2017 12:30
+//			    .forJob("job1", "group1") // identify job with name, group strings
+//			    .build();
+		
 		quartz.scheduleJob(job, trigger);
 	}
 
