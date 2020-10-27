@@ -58,6 +58,7 @@ public class QScheduleMessage extends PanacheEntity {
 	public String realm;
 
 	@NotEmpty
+	@Column(name = "jsonMessage", columnDefinition = "LONGTEXT")
 	public String jsonMessage;
 	
 	
@@ -67,6 +68,7 @@ public class QScheduleMessage extends PanacheEntity {
 	@NotEmpty
 	public String channel;
 	
+	@Column(name = "token", columnDefinition = "MEDIUMTEXT")
 	public String token;
 
 

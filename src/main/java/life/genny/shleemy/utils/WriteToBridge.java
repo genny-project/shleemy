@@ -20,15 +20,15 @@ import life.genny.shleemy.models.QMessage;
 public class WriteToBridge {
 	 private static final Logger log = Logger.getLogger(WriteToBridge.class);	
 
-		public static String writeMessage(String bridgeUrl, QMessage msg, final GennyToken userToken) {
+		public static String writeMessage(String bridgeUrl, final String channel,QMessage msg, final GennyToken userToken) {
 
 			Jsonb jsonb = JsonbBuilder.create();
 
 			String entityString = jsonb.toJson(msg);
-			return writeMessage(bridgeUrl, entityString, userToken);
+			return writeMessage(bridgeUrl, channel,entityString, userToken);
 		}
 	 
-	public static String writeMessage(String bridgeUrl, String entityString, final GennyToken userToken) {
+	public static String writeMessage(String bridgeUrl, final String channel,String entityString, final GennyToken userToken) {
 
 
 		String responseString = null;
@@ -36,7 +36,7 @@ public class WriteToBridge {
 		CloseableHttpResponse response = null;
 		try {
 
-			HttpPost post = new HttpPost(bridgeUrl + "?channel=webdata");
+			HttpPost post = new HttpPost(bridgeUrl + "?channel="+channel);
 
 			StringEntity postEntity = new StringEntity(entityString, "UTF-8");
 
