@@ -70,7 +70,7 @@ public class ScheduleResource {
 		
 
 		try {
-			taskBean.addSchedule(scheduleMessage, scheduleMessage.cron, userToken);
+			taskBean.addSchedule(scheduleMessage, userToken);
 			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById").build(scheduleMessage.id);
 			return Response.created(uri).build();
 

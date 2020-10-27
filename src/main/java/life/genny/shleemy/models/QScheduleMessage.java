@@ -24,6 +24,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.jboss.logging.Logger;
 
+
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
@@ -46,13 +47,18 @@ public class QScheduleMessage extends PanacheEntity {
 	public LocalDateTime updated;
 
 	
-	@NotEmpty
+	
 	public String cron;
+	
+
+	public LocalDateTime triggertime;
+
 		
 	@NotEmpty
 	public String realm;
 
 	@NotEmpty
+	@Column(name = "jsonMessage", columnDefinition = "LONGTEXT")
 	public String jsonMessage;
 	
 	
@@ -62,12 +68,29 @@ public class QScheduleMessage extends PanacheEntity {
 	@NotEmpty
 	public String channel;
 	
+	@Column(name = "token", columnDefinition = "MEDIUMTEXT")
 	public String token;
 
 
-	public QScheduleMessage() {
-    }
-
+	public QScheduleMessage()
+	{}
+	
+	public QScheduleMessage(final String jsonMessage, final String sourceCode, final String channel, final String cron, final String realm)
+	{
+		this.cron = cron;
+		this.jsonMessage = jsonMessage;
+		this.channel = channel;
+		this.sourceCode = sourceCode;
+	}
+	
+	public QScheduleMessage(final String jsonMessage, final String sourceCode, final String channel, final LocalDateTime triggertime, final String realm)
+	{
+		this.triggertime = triggertime;
+		this.jsonMessage = jsonMessage;
+		this.channel = channel;
+		this.sourceCode = sourceCode;
+	}
+	
 	public static QScheduleMessage findById(Long id) {
 		return find("id", id).firstResult();
 	}
