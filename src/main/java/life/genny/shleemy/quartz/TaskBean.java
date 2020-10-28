@@ -66,7 +66,7 @@ public class TaskBean {
 		
 		String uniqueCode = userToken.getUserCode()+"-"+UUID.randomUUID().toString().substring(0, 15);
 
-		JobDetail job = JobBuilder.newJob(MyJob.class).withIdentity("myJob", userToken.getRealm())
+		JobDetail job = JobBuilder.newJob(MyJob.class).withIdentity(uniqueCode, userToken.getRealm())
 				.setJobData(jobDataMap).build();
 
 		Trigger trigger = null;
