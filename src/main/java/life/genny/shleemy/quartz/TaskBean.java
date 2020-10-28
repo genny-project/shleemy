@@ -83,7 +83,7 @@ public class TaskBean {
 
 		} else if (scheduleMessage.triggertime != null) {
 			Date scheduledDateTime = Date.from(scheduleMessage.triggertime.atZone(ZoneId.systemDefault()).toInstant());
-			trigger = TriggerBuilder.newTrigger().withIdentity("trigger1", userToken.getRealm())
+			trigger = TriggerBuilder.newTrigger().withIdentity(uniqueCode, userToken.getRealm())
 					.startAt(scheduledDateTime) // some Date date 30.06.2017 12:30
 					.forJob(uniqueCode, userToken.getRealm()) // identify job with name, group strings
 					.build();
