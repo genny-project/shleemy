@@ -65,6 +65,14 @@ public class ScheduleResource {
 		scheduleMessage.id = null;
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("User is "+userToken.getEmail());
+		
+		
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
+		{
+			return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+		}
+		
+		
 		scheduleMessage.realm = userToken.getRealm();
 		scheduleMessage.sourceCode = userToken.getUserCode(); // force
 		scheduleMessage.token = userToken.getToken();
@@ -91,6 +99,10 @@ public class ScheduleResource {
 	public Response findById(@PathParam("id") final Long id) {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("User is "+userToken.getEmail());
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
+		{
+			return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+		}
 
 
 		QScheduleMessage scheduleMessage = QScheduleMessage.findById(id);
@@ -112,6 +124,10 @@ public class ScheduleResource {
 	public Response deleteNote(@PathParam("id") final Long id) {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("User is "+userToken.getEmail());
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
+		{
+			return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+		}
 
 
 		QScheduleMessage scheduleMessage = QScheduleMessage.findById(id);
