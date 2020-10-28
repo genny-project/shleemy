@@ -60,6 +60,8 @@ public class ScheduleResource {
 	@Transactional
 	@POST
 	public Response newQScheduleMessage(@Context UriInfo uriInfo, @Valid QScheduleMessage scheduleMessage) {
+		String uniqueScheduleCode = "";
+		
 		scheduleMessage.id = null;
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("User is "+userToken.getEmail());
@@ -70,9 +72,9 @@ public class ScheduleResource {
 		
 
 		try {
-			taskBean.addSchedule(scheduleMessage, userToken);
+			uniqueScheduleCode = taskBean.addSchedule(scheduleMessage, userToken);
 			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById").build(scheduleMessage.id);
-			return Response.created(uri).build();
+			return Response.created(uri).entity(uniqueScheduleCode).build();
 
 		} catch (SchedulerException e) {
 			// TODO Auto-generated catch block

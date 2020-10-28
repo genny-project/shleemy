@@ -3,6 +3,7 @@ package life.genny.shleemy.quartz;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -51,7 +52,7 @@ public class TaskBean {
 //		quartz.scheduleJob(job, trigger);
 	}
 
-	public void addSchedule(QScheduleMessage scheduleMessage, GennyToken userToken) throws SchedulerException {
+	public String addSchedule(QScheduleMessage scheduleMessage, GennyToken userToken) throws SchedulerException {
 
 		scheduleMessage.token = userToken.getToken();
 
@@ -62,6 +63,8 @@ public class TaskBean {
 		jobDataMap.put("sourceCode", userToken.getUserCode());
 		jobDataMap.put("token", userToken.getToken());
 		jobDataMap.put("channel", scheduleMessage.channel);
+		
+		String uniqueCode = userToken.getUserCode()+"-"+UUID.randomUUID().toString().substring(0, 15);
 
 		JobDetail job = JobBuilder.newJob(MyJob.class).withIdentity("myJob", userToken.getRealm())
 				.setJobData(jobDataMap).build();
@@ -69,7 +72,7 @@ public class TaskBean {
 		Trigger trigger = null;
 
 		if (!StringUtils.isBlank(scheduleMessage.cron)) {
-			trigger = TriggerBuilder.newTrigger().withIdentity("myJob", userToken.getRealm()).startNow()
+			trigger = TriggerBuilder.newTrigger().withIdentity(uniqueCode, userToken.getRealm()).startNow()
 					.withSchedule(cronSchedule(
 							scheduleMessage.realm + ":" + scheduleMessage.sourceCode + ":" + userToken.getEmail(),
 							scheduleMessage.cron))
@@ -82,7 +85,7 @@ public class TaskBean {
 			Date scheduledDateTime = Date.from(scheduleMessage.triggertime.atZone(ZoneId.systemDefault()).toInstant());
 			trigger = TriggerBuilder.newTrigger().withIdentity("trigger1", userToken.getRealm())
 					.startAt(scheduledDateTime) // some Date date 30.06.2017 12:30
-					.forJob("myJob", userToken.getRealm()) // identify job with name, group strings
+					.forJob(uniqueCode, userToken.getRealm()) // identify job with name, group strings
 					.build();
 			log.info(
 					"Scheduled " + userToken.getUserCode() + ":" + userToken.getEmail() + " for " + userToken.getRealm()
@@ -91,6 +94,8 @@ public class TaskBean {
 		}
 
 		quartz.scheduleJob(job, trigger);
+		
+		return uniqueCode;
 
 	}
 
