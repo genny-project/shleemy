@@ -114,7 +114,7 @@ public class TaskBean {
 		GennyToken userToken = new GennyToken(token);
 
 		log.info("Executing Schedule " + sourceCode + ":" + userToken.getEmail() + " for " + userToken.getRealm()
-				+ " at " + LocalDateTime.now());
+				+ " at " + LocalDateTime.now()+" sending through bridgeUrl="+bridgeUrl);
 
 		String scheduleMsgJson = (String) context.getJobDetail().getJobDataMap().get("message");// jsonb.toJson(scheduleMessage);
 		WriteToBridge.writeMessage(bridgeUrl, channel, scheduleMsgJson, userToken);
