@@ -69,7 +69,8 @@ public class ScheduleResource {
 		
 		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
 		{
-			return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+			log.error(userToken.getUserCode()+" has no authority to schedule");
+			//return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
 		}
 		
 		
