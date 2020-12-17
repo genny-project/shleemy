@@ -42,13 +42,12 @@ public class ScheduleResource {
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
 
-	
 	@Inject
 	SecurityIdentity securityIdentity;
 
 	@Inject
 	JsonWebToken accessToken;
-	
+
 	@Inject
 	TaskBean taskBean;
 
@@ -61,28 +60,26 @@ public class ScheduleResource {
 	@POST
 	public Response newQScheduleMessage(@Context UriInfo uriInfo, @Valid QScheduleMessage scheduleMessage) {
 		String uniqueScheduleCode = "";
-		
+
 		scheduleMessage.id = null;
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
-		log.info("User is "+userToken.getEmail());
-		
-		
-		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
-		{
-			log.error(userToken.getUserCode()+" has no authority to schedule");
-			//return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+		log.info("User is " + userToken.getEmail());
+
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+			log.error(userToken.getUserCode() + " has no authority to schedule");
+			// return Response.status(Status.FORBIDDEN).entity("No authority to
+			// schedule").build();
 		}
-		
-		
+
 		scheduleMessage.realm = userToken.getRealm();
 		scheduleMessage.sourceCode = userToken.getUserCode(); // force
 		scheduleMessage.token = userToken.getToken();
 		scheduleMessage.persist();
-		
 
 		try {
 			uniqueScheduleCode = taskBean.addSchedule(scheduleMessage, userToken);
-			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById").build(scheduleMessage.id);
+			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById")
+					.build(scheduleMessage.id);
 			return Response.created(uri).entity(uniqueScheduleCode).build();
 
 		} catch (SchedulerException e) {
@@ -93,68 +90,151 @@ public class ScheduleResource {
 
 	}
 
+	@Path("/code/{code}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response findById(@PathParam("code") final String code) {
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
+		log.info("User is " + userToken.getEmail());
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+			log.error(userToken.getUserCode() + " has no authority to schedule");
+			// return Response.status(Status.FORBIDDEN).entity("No authority to
+			// schedule").build();
+		}
 
+		QScheduleMessage scheduleMessage = QScheduleMessage.findByCode(code);
+		if (scheduleMessage == null) {
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with code of " + code + " does not exist.")
+					.build();
+		}
+		if (scheduleMessage.realm != userToken.getRealm()) {
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with bad realm")
+					.build();
+		}
+
+		return Response.status(Status.OK).entity(scheduleMessage).build();
+	}
+	
 	@Path("/id/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findById(@PathParam("id") final Long id) {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
-		log.info("User is "+userToken.getEmail());
-		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
-		{
-			return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+		log.info("User is " + userToken.getEmail());
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+			log.error(userToken.getUserCode() + " has no authority to schedule");
+			// return Response.status(Status.FORBIDDEN).entity("No authority to
+			// schedule").build();
 		}
-
 
 		QScheduleMessage scheduleMessage = QScheduleMessage.findById(id);
 		if (scheduleMessage == null) {
-			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.").build();
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.")
+					.build();
 		}
 		if (scheduleMessage.realm != userToken.getRealm()) {
-			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.").build();
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.")
+					.build();
 		}
 
 		return Response.status(Status.OK).entity(scheduleMessage).build();
 	}
 
-
-
 	@Path("/{id}")
 	@DELETE
 	@Transactional
-	public Response deleteNote(@PathParam("id") final Long id) {
+	public Response deleteSchedule(@PathParam("id") final Long id) {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
-		log.info("User is "+userToken.getEmail());
-		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev")))
-		{
-			return Response.status(Status.FORBIDDEN).entity("No authority to schedule").build();
+		log.info("User is " + userToken.getEmail());
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+			log.error(userToken.getUserCode() + " has no authority to schedule");
+			// return Response.status(Status.FORBIDDEN).entity("No authority to
+			// schedule").build();
 		}
-
 
 		QScheduleMessage scheduleMessage = QScheduleMessage.findById(id);
 		if (scheduleMessage == null) {
-			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.").build();
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.")
+					.build();
 		}
 		if (scheduleMessage.realm != userToken.getRealm()) {
-			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.").build();
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with id of " + id + " does not exist.")
+					.build();
 		}
 		if ((userToken.hasRole("admin")) || (userToken.getUserCode().equals(scheduleMessage.sourceCode))) {
-			QScheduleMessage.deleteById(id);
+			// QScheduleMessage.deleteById(id);
 		} else {
-			return Response.status(Status.FORBIDDEN).entity("ScheduleMessage with id of " + id + " cannot be deleted by this user.").build();
+			return Response.status(Status.FORBIDDEN)
+					.entity("ScheduleMessage with id of " + id + " cannot be deleted by this user.").build();
 
 		}
-		
-		QScheduleMessage.deleteById(id);
+
+		QScheduleMessage msg = QScheduleMessage.findById(id);
+		if (msg != null) {
+				Boolean success = false;
+				try {
+					success = taskBean.abortSchedule(msg.code, userToken);
+				} catch (org.quartz.SchedulerException e) {
+					log.error(e.getMessage());
+				}
+
+				if (success) {
+					QScheduleMessage.deleteByCode(msg.code);
+					return Response.status(Status.OK).build();
+				} else {
+					return Response.status(Status.NOT_FOUND).build();
+				}
+		}
 
 		return Response.status(Status.OK).build();
 	}
 
+	@Path("/code/{code}")
+	@DELETE
+	@Transactional
+	public Response deleteSchedule(@PathParam("code") final String code) {
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
+		log.info("User is " + userToken.getEmail());
+		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+			log.error(userToken.getUserCode() + " has no authority to schedule");
+			// return Response.status(Status.FORBIDDEN).entity("No authority to
+			// schedule").build();
+		}
+
+		QScheduleMessage scheduleMessage = QScheduleMessage.findByCode(code);
+		if (scheduleMessage == null) {
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with code of " + code + " does not exist.")
+					.build();
+		}
+		if (scheduleMessage.realm != userToken.getRealm()) {
+			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage has a different realm to user.").build();
+		}
+		if ((userToken.hasRole("admin")) || (userToken.getUserCode().equals(scheduleMessage.sourceCode))) {
+			// QScheduleMessage.deleteByCode(code);
+		} else {
+			return Response.status(Status.FORBIDDEN)
+					.entity("ScheduleMessage with code of " + code + " cannot be deleted by this user.").build();
+
+		}
+
+		
+		Boolean success = false;
+		try {
+			success = taskBean.abortSchedule(code, userToken);
+		} catch (org.quartz.SchedulerException e) {
+			log.error(e.getMessage());
+		}
+		if (success) {
+			QScheduleMessage.deleteByCode(code);
+			return Response.status(Status.OK).build();
+		} else {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}
 
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("ScheduleResource Endpoint starting");
-
 
 	}
 

@@ -25,6 +25,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.JobKey;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
@@ -52,6 +53,15 @@ public class TaskBean {
 //		quartz.scheduleJob(job, trigger);
 	}
 
+	
+	public Boolean abortSchedule(String uniqueCode, GennyToken userToken) throws SchedulerException {
+		Boolean ret = true;
+	
+		JobKey jobKey = new JobKey(uniqueCode, userToken.getRealm());
+		quartz.deleteJob(jobKey);
+		return ret;
+	}
+	
 	public String addSchedule(QScheduleMessage scheduleMessage, GennyToken userToken) throws SchedulerException {
 
 		scheduleMessage.token = userToken.getToken();
@@ -63,8 +73,9 @@ public class TaskBean {
 		jobDataMap.put("sourceCode", userToken.getUserCode());
 		jobDataMap.put("token", userToken.getToken());
 		jobDataMap.put("channel", scheduleMessage.channel);
+		jobDataMap.put("code", scheduleMessage.code);
 		
-		String uniqueCode = userToken.getUserCode()+"-"+UUID.randomUUID().toString().substring(0, 15);
+		String uniqueCode = scheduleMessage.code; // given to us by sender
 
 		JobDetail job = JobBuilder.newJob(MyJob.class).withIdentity(uniqueCode, userToken.getRealm())
 				.setJobData(jobDataMap).build();

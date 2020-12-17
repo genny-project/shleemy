@@ -70,21 +70,25 @@ public class QScheduleMessage extends PanacheEntity {
 	
 	@Column(name = "token", columnDefinition = "MEDIUMTEXT")
 	public String token;
+	
+	public String code;
 
 
 	public QScheduleMessage()
 	{}
 	
-	public QScheduleMessage(final String jsonMessage, final String sourceCode, final String channel, final String cron, final String realm)
+	public QScheduleMessage(final String code,final String jsonMessage, final String sourceCode, final String channel, final String cron, final String realm)
 	{
+		this.code = code;
 		this.cron = cron;
 		this.jsonMessage = jsonMessage;
 		this.channel = channel;
 		this.sourceCode = sourceCode;
 	}
 	
-	public QScheduleMessage(final String jsonMessage, final String sourceCode, final String channel, final LocalDateTime triggertime, final String realm)
+	public QScheduleMessage(final String code,final String jsonMessage, final String sourceCode, final String channel, final LocalDateTime triggertime, final String realm)
 	{
+		this.code = code;
 		this.triggertime = triggertime;
 		this.jsonMessage = jsonMessage;
 		this.channel = channel;
@@ -95,9 +99,15 @@ public class QScheduleMessage extends PanacheEntity {
 		return find("id", id).firstResult();
 	}
 
+	public static QScheduleMessage findByCode(String code) {
+		return find("code", code).firstResult();
+	}
+
 	public static long deleteById(final Long id) {
 		return delete("id", id);
 	}
 
-
+	public static long deleteByCode(final String code) {
+		return delete("code", code);
+	}
 }
