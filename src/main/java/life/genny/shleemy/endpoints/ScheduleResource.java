@@ -66,7 +66,7 @@ public class ScheduleResource {
 		log.info("User is " + userToken.getEmail());
 
 		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
-			log.error(userToken.getUserCode() + " has no authority to schedule");
+			//log.error(userToken.getUserCode() + " has no authority to schedule");
 			// return Response.status(Status.FORBIDDEN).entity("No authority to
 			// schedule").build();
 		}
@@ -76,6 +76,9 @@ public class ScheduleResource {
 		scheduleMessage.token = userToken.getToken();
 		scheduleMessage.persist();
 
+		
+		log.info("Persisting new Schedule-> "+scheduleMessage.code+":"+scheduleMessage.triggertime+" from "+scheduleMessage.sourceCode);
+		
 		try {
 			uniqueScheduleCode = taskBean.addSchedule(scheduleMessage, userToken);
 			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById")

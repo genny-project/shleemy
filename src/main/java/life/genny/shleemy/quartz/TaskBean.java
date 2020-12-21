@@ -99,7 +99,7 @@ public class TaskBean {
 					.forJob(uniqueCode, userToken.getRealm()) // identify job with name, group strings
 					.build();
 			log.info(
-					"Scheduled " + userToken.getUserCode() + ":" + userToken.getEmail() + " for " + userToken.getRealm()
+					"Scheduled " + userToken.getUserCode() +":"+uniqueCode+ ":" + userToken.getEmail() + " for " + userToken.getRealm()
 							+ " for trigger at " + scheduledDateTime + " and now is " + LocalDateTime.now());
 
 		}
@@ -121,10 +121,11 @@ public class TaskBean {
 
 		String sourceCode = context.getJobDetail().getJobDataMap().getString("sourceCode");
 		String channel = context.getJobDetail().getJobDataMap().getString("channel");
+		String code = context.getJobDetail().getJobDataMap().getString("code");
 		String token = context.getJobDetail().getJobDataMap().getString("token");
 		GennyToken userToken = new GennyToken(token);
 
-		log.info("Executing Schedule " + sourceCode + ":" + userToken.getEmail() + " for " + userToken.getRealm()
+		log.info("Executing Schedule " + sourceCode + ":"+code+":" + userToken.getEmail() + " for " + userToken.getRealm()
 				+ " at " + LocalDateTime.now()+" sending through bridgeUrl="+bridgeUrl);
 
 		String scheduleMsgJson = (String) context.getJobDetail().getJobDataMap().get("message");// jsonb.toJson(scheduleMessage);
