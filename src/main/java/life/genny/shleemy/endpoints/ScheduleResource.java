@@ -93,7 +93,7 @@ public class ScheduleResource {
 	@Path("/code/{code}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response findById(@PathParam("code") final String code) {
+	public Response findByCode(@PathParam("code") final String code) {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("User is " + userToken.getEmail());
 		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
