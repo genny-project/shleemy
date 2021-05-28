@@ -11,7 +11,7 @@
 		<commons-lang3.version>3.10</commons-lang3.version>
 		<docker-plugin.version>0.33.0</docker-plugin.version>
 		<jandex.version>1.0.7</jandex.version>
-		<keycloak.version>11.0.3</keycloak.version>
+		<keycloak.version>13.0.1</keycloak.version>
 		<keycloak.test.port>8680</keycloak.test.port>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
