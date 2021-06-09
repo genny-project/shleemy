@@ -1,11 +1,19 @@
 #!/bin/bash
-#copy the graal certs 
-#Contents/Home/lib/security/cacerts
-#/Library/Java/JavaVirtualMachines/graalvm-ce-java11-19.3.1/Contents/Home
-#mvn package -Pnative -Dquarkus.native.container-build=true  -DskipTests=true
+realm=crowtech
 
-./build-native.sh
-#./mvnw package -Pnative -Dquarkus.native.container-build=true -DskipTests=true
-docker build -f src/main/docker/Dockerfile.native -t gennyproject/shleemy:latest .
-docker tag gennyproject/notes:latest gennyproject/shleemy:7.3.0
+echo "Building native"
+
+pwd=${PWD##*/}
+pwd=aible-quarkus
+function prop() {
+  grep "${1}=" ${file} | cut -d'=' -f2
+}
+
+echo "Building docker ${realm}/${pwd}:${version}"
+
+./mvnw  package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -DskipTests=true
+version=$(cat src/main/resources/${pwd}-git.properties | grep 'git.build.version' | cut -d'=' -f2)
+#version=$(grep 'git.build.version')
+echo $version
+docker tag ${USER}/${pwd}:${version} ${realm}/${pwd}:native
 
