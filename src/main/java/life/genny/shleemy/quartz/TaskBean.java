@@ -125,12 +125,11 @@ public class TaskBean {
 		String token = context.getJobDetail().getJobDataMap().getString("token");
 		GennyToken userToken = new GennyToken(token);
 
-		log.info("Executing Schedule " + sourceCode + ":"+code+":" + userToken.getEmail() + " for " + userToken.getRealm()
-				+ " at " + LocalDateTime.now()+" sending through bridgeUrl="+bridgeUrl);
 
 		String scheduleMsgJson = (String) context.getJobDetail().getJobDataMap().get("message");// jsonb.toJson(scheduleMessage);
-		WriteToBridge.writeMessage(bridgeUrl, channel, scheduleMsgJson, userToken);
-
+		String result = WriteToBridge.writeMessage(bridgeUrl, channel, scheduleMsgJson, userToken);
+		log.info("Executing Schedule " + sourceCode + ":"+code+":" + userToken.getEmail() + " for " + userToken.getRealm()
+				+ " at " + LocalDateTime.now()+" sending through bridgeUrl="+bridgeUrl + ", result:" + result);
 	}
 
 	// A new instance of MyJob is created by Quartz for every job execution
