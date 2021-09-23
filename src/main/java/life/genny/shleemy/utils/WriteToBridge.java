@@ -1,17 +1,16 @@
 package life.genny.shleemy.utils;
 
-import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.concurrent.*;
 
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 
 import life.genny.shleemy.models.GennyToken;
@@ -29,47 +28,52 @@ public class WriteToBridge {
 		}
 	 
 	public static String writeMessage(String bridgeUrl, final String channel,String entityString, final GennyToken userToken) {
+		ExecutorService executorService = Executors.newFixedThreadPool(20);
+		HttpClient httpClient = HttpClient.newBuilder().executor(executorService)
+				.version(HttpClient.Version.HTTP_2).connectTimeout(Duration.ofSeconds(20)).build();
 
+		Integer httpTimeout = 7;  // 7 secnds
+		String postUrl = bridgeUrl + "?channel="+channel;
 
-		String responseString = null;
-		CloseableHttpClient httpclient = HttpClientBuilder.create().build();
-		CloseableHttpResponse response = null;
-		try {
-
-			HttpPost post = new HttpPost(bridgeUrl + "?channel="+channel);
-
-			StringEntity postEntity = new StringEntity(entityString, "UTF-8");
-
-			post.setEntity(postEntity);
-			post.setHeader("Content-Type", "application/json; charset=UTF-8");
-			if (userToken != null) {
-				post.addHeader("Authorization", "Bearer " + userToken.getToken()); // Authorization": `Bearer
-			}
-
-			response = httpclient.execute(post);
-			HttpEntity entity = response.getEntity();
-			responseString = EntityUtils.toString(entity);
-			return responseString;
-		} catch (Exception e) {
-			log.error(e.getMessage());
-		} finally {
-			if (response != null) {
-				try {
-					response.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} else {
-				log.error("postApi response was null");
-			}
-			try {
-				httpclient.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		if (StringUtils.isBlank(postUrl)) {
+			log.error("Blank url in apiPostEntity");
 		}
-		return responseString;
+
+		HttpRequest.BodyPublisher requestBody = HttpRequest.BodyPublishers.ofString(entityString);
+
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder().POST(requestBody).uri(URI.create(postUrl))
+				.setHeader("Content-Type", "application/json")
+				.setHeader("Authorization", "Bearer " + userToken);
+
+
+		if (postUrl.contains("genny.life")) { // Hack for local server not having http2
+			requestBuilder = requestBuilder.version(HttpClient.Version.HTTP_1_1);
+		}
+
+		HttpRequest request = requestBuilder.build();
+
+		String result = null;
+		Boolean done = false;
+		int count = 1;
+		while ((!done) && (count > 0)) {
+			CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request,
+					java.net.http.HttpResponse.BodyHandlers.ofString());
+
+			try {
+				result = response.thenApply(java.net.http.HttpResponse::body).get(httpTimeout, TimeUnit.SECONDS);
+				done = true;
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				// TODO Auto-generated catch block
+				log.error("Count:" + count + ", Exception occurred when post to URL: "+ postUrl + ",Body is entityString:" + entityString + ", Exception details:"  + e.getCause() );
+				// try renewing the httpclient
+				httpClient = HttpClient.newBuilder().executor(executorService).version(HttpClient.Version.HTTP_2)
+						.connectTimeout(Duration.ofSeconds(httpTimeout)).build();
+				if (count <= 0) {
+					done = true;
+				}
+			}
+			count--;
+		}
+		return result;
 	}
 }
