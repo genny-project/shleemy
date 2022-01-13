@@ -1,42 +1,22 @@
 package life.genny.shleemy.quartz;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.UUID;
+import io.quarkus.runtime.StartupEvent;
+import life.genny.shleemy.endpoints.ScheduleResource;
+import life.genny.shleemy.models.GennyToken;
+import life.genny.shleemy.models.QScheduleMessage;
+import life.genny.shleemy.producer.InternalProducer;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
+import org.quartz.*;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 import javax.transaction.Transactional;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.config.ConfigProvider;
-import org.jboss.logging.Logger;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.Job;
-import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.JobKey;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
-
-import io.quarkus.runtime.StartupEvent;
-
-import life.genny.shleemy.endpoints.ScheduleResource;
-import life.genny.shleemy.models.GennyToken;
-import life.genny.shleemy.models.QScheduleMessage;
-import life.genny.shleemy.utils.WriteToBridge;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @ApplicationScoped
 public class TaskBean {
@@ -45,6 +25,9 @@ public class TaskBean {
 
 	@Inject
 	org.quartz.Scheduler quartz;
+
+	@Inject
+	InternalProducer producer;
 
 	void onStart(@Observes StartupEvent event) throws SchedulerException {
 //		JobDetail job = JobBuilder.newJob(MyJob.class).withIdentity("myJob", "myGroup").build();
@@ -125,11 +108,11 @@ public class TaskBean {
 		String token = context.getJobDetail().getJobDataMap().getString("token");
 		GennyToken userToken = new GennyToken(token);
 
-
 		String scheduleMsgJson = (String) context.getJobDetail().getJobDataMap().get("message");// jsonb.toJson(scheduleMessage);
-		String result = WriteToBridge.writeMessage(bridgeUrl, channel, scheduleMsgJson, userToken);
+		producer.getToEvents().send(scheduleMsgJson);
+//		String result = WriteToBridge.writeMessage(bridgeUrl, channel, scheduleMsgJson, userToken);
 		log.info("Executing Schedule " + sourceCode + ":"+code+":" + userToken.getEmail() + " for " + userToken.getRealm()
-				+ " at " + LocalDateTime.now()+" sending through bridgeUrl="+bridgeUrl + ", result:" + result);
+				+ " at " + LocalDateTime.now()+" sending through bridgeUrl="+bridgeUrl + ", scheduleMsgJson:" + scheduleMsgJson);
 	}
 
 	// A new instance of MyJob is created by Quartz for every job execution
