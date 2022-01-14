@@ -65,6 +65,8 @@ public class TaskBean {
 
         Trigger trigger = null;
 
+        log.info("scheduleMessage: " + scheduleMessage);
+
         if (!StringUtils.isBlank(scheduleMessage.cron)) {
             trigger = TriggerBuilder.newTrigger().withIdentity(uniqueCode, userToken.getRealm()).startNow()
                     .withSchedule(cronSchedule(
