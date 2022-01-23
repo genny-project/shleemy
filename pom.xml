@@ -8,6 +8,7 @@
 	<artifactId>shleemy</artifactId>
 	<version>9.11.0</version>
 	<properties>
+		<genny.version>${project.version}</genny.version>
 		<commons-lang3.version>3.10</commons-lang3.version>
 		<docker-plugin.version>0.33.0</docker-plugin.version>
 		<jandex.version>1.0.7</jandex.version>
@@ -37,6 +38,17 @@
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
+		<dependency>
+			<groupId>life.genny</groupId>
+			<artifactId>qwandaq</artifactId>
+			<version>${genny.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>xml-apis</artifactId>
+					<groupId>xml-apis</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-resteasy-jsonb</artifactId>

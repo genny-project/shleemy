@@ -28,8 +28,8 @@ import org.quartz.SchedulerException;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.security.identity.SecurityIdentity;
-import life.genny.shleemy.models.GennyToken;
-import life.genny.shleemy.models.QScheduleMessage;
+import life.genny.qwandaq.message.QScheduleMessage;
+import life.genny.qwandaq.models.GennyToken;
 import life.genny.shleemy.quartz.TaskBean;
 
 @Path("/api/schedule")
