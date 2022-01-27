@@ -1,6 +1,7 @@
 package life.genny.shleemy.live.data;
 
 import org.jboss.logging.Logger;
+import org.quartz.SchedulerException;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -13,7 +14,8 @@ import life.genny.qwandaq.utils.CacheUtils;
 import life.genny.qwandaq.utils.DefUtils;
 import life.genny.qwandaq.utils.KeycloakUtils;
 import life.genny.qwandaq.utils.QwandaUtils;
-import life.genny.shleemy.utils.ScheduleUtils;
+import life.genny.qwandaq.utils.SecurityUtils;
+import life.genny.shleemy.quartz.TaskBean;
 import io.quarkus.runtime.ShutdownEvent;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -49,6 +51,9 @@ public class InternalConsumer {
 	@Inject
 	GennyCache cache;
 
+	@Inject
+	TaskBean taskBean;
+
 	GennyToken serviceToken;
 
 	BaseEntityUtils beUtils;
@@ -82,8 +87,31 @@ public class InternalConsumer {
 
 		log.debug("Incoming Messsage: " + payload);
 
-		QScheduleMessage msg = jsonb.fromJson(payload, QScheduleMessage.class);
+		QScheduleMessage scheduleMessage = jsonb.fromJson(payload, QScheduleMessage.class);
 
-		ScheduleUtils.scheduleMessage(msg);
+		// fetch token from msg and check authority
+		String token = scheduleMessage.getToken();
+		GennyToken userToken = new GennyToken(token);
+		log.info("User is " + userToken.getEmail());
+
+		if (!SecurityUtils.isAuthorisedGennyToken(userToken)) {
+			return;
+		}
+
+		// setup and persist message
+		scheduleMessage.id = null;
+		scheduleMessage.realm = userToken.getRealm();
+		scheduleMessage.sourceCode = userToken.getUserCode();
+		scheduleMessage.token = userToken.getToken();
+		scheduleMessage.persist();
+
+		log.info("Persisting new Schedule-> "+scheduleMessage.code+":"+scheduleMessage.triggertime+" from "+scheduleMessage.sourceCode);
+		
+		try {
+			taskBean.addSchedule(scheduleMessage, userToken);
+		} catch (SchedulerException e) {
+			log.error(e);
+		}
+
 	}
 }
