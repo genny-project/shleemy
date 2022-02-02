@@ -90,6 +90,12 @@ public class ScheduleResource {
 
 	}
 
+	@Path("/hello")
+	@GET
+	public Response hello() {
+		return Response.ok().entity("Hello World!").build();
+	}
+
 	@Path("/code/{code}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
