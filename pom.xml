@@ -23,7 +23,7 @@
 		<quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
 		<quarkus.platform.version>2.7.1.Final</quarkus.platform.version>
 		<qwanda.version>${project.version}</qwanda.version>
-		<surefire.version>2.22.0</surefire.version>
+		<surefire.version>3.0.0-M5</surefire.version>
 		<testcontainers.version>1.15.2</testcontainers.version>
 	</properties>
 	<dependencyManagement>
