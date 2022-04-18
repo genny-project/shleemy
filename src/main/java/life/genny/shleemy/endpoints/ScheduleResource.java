@@ -25,7 +25,6 @@ import javax.ws.rs.core.UriInfo;
 import life.genny.shleemy.models.GennyToken;
 import life.genny.shleemy.models.QScheduleMessage;
 import life.genny.shleemy.quartz.TaskBean;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.quartz.SchedulerException;
@@ -41,20 +40,20 @@ public class ScheduleResource {
 
 	private static final Logger log = Logger.getLogger(ScheduleResource.class);
 
-	@ConfigProperty(name = "default.realm", defaultValue = "genny")
-	String defaultRealm;
+	// @ConfigProperty(name = "default.realm", defaultValue = "genny")
+	// String defaultRealm;
 
-		@ConfigProperty(name = "quarkus.oidc.realm", defaultValue = "internmatch")
-	String realm;
+	// 	@ConfigProperty(name = "quarkus.oidc.realm", defaultValue = "internmatch")
+	// String realm;
 
-	@ConfigProperty(name = "quarkus.oidc.auth-server-url", defaultValue = "https://keycloak.gada.io/auth")
-	String keycloakUrl;
+	// @ConfigProperty(name = "quarkus.oidc.auth-server-url", defaultValue = "https://keycloak.gada.io/auth")
+	// String keycloakUrl;
 
-		@ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "mentormatch")
-	String clientId;
+	// 	@ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "mentormatch")
+	// String clientId;
 
-		@ConfigProperty(name = "quarkus.oidc.credentials.secret", defaultValue = "")
-	String secret;
+	// 	@ConfigProperty(name = "quarkus.oidc.credentials.secret", defaultValue = "")
+	// String secret;
 
 
 	@Inject
@@ -292,10 +291,10 @@ return Response.status(Status.FORBIDDEN).build();
 	void onStart(@Observes StartupEvent ev) {
 		log.info("ScheduleResource Endpoint starting");
 
-		log.info("realm="+realm);
-		log.info("keycloakUrl=" + keycloakUrl);
-		log.info("clientId=" + clientId);
-		log.info("secret="+secret);
+		// log.info("realm="+realm);
+		// log.info("keycloakUrl=" + keycloakUrl);
+		// log.info("clientId=" + clientId);
+		// log.info("secret="+secret);
 
 	}
 
