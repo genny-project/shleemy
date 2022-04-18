@@ -4,6 +4,7 @@ import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.security.identity.SecurityIdentity;
 import java.net.URI;
+import java.util.List;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -16,6 +17,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -24,10 +26,10 @@ import life.genny.shleemy.models.GennyToken;
 import life.genny.shleemy.models.QScheduleMessage;
 import life.genny.shleemy.quartz.TaskBean;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.quartz.SchedulerException;
+
 
 
 
@@ -58,8 +60,11 @@ public class ScheduleResource {
 	@Inject
 	SecurityIdentity securityIdentity;
 
-	@Inject
-	JsonWebToken accessToken;
+	@Context 
+	HttpHeaders headers;
+
+	// @Inject
+	// JsonWebToken accessToken;
 
 	@Inject
 	TaskBean taskBean;
@@ -75,67 +80,85 @@ public class ScheduleResource {
 		String uniqueScheduleCode = "";
 
 		scheduleMessage.id = null;
-		GennyToken userToken = new GennyToken(accessToken.getRawToken());
-		log.info("User is " + userToken.getEmail());
+		List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+		if ((authHeaders != null) && (!authHeaders.isEmpty())) {
+			String token = authHeaders.get(0);
+			log.info("token="+token);
+			GennyToken userToken = new GennyToken(token);
+			log.info("User is " + userToken.getEmail());
 
-		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
-			//log.error(userToken.getUserCode() + " has no authority to schedule");
-			// return Response.status(Status.FORBIDDEN).entity("No authority to
-			// schedule").build();
+			if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+				//log.error(userToken.getUserCode() + " has no authority to schedule");
+				// return Response.status(Status.FORBIDDEN).entity("No authority to
+				// schedule").build();
+			}
+
+			scheduleMessage.realm = userToken.getRealm();
+			scheduleMessage.sourceCode = userToken.getUserCode(); // force
+			scheduleMessage.token = userToken.getToken();
+			scheduleMessage.persist();
+
+			log.info("Persisting new Schedule-> " + scheduleMessage.code + ":" + scheduleMessage.triggertime + " from "
+					+ scheduleMessage.sourceCode);
+
+			try {
+				uniqueScheduleCode = taskBean.addSchedule(scheduleMessage, userToken);
+				URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById")
+						.build(scheduleMessage.id);
+				return Response.created(uri).entity(uniqueScheduleCode).build();
+
+			} catch (SchedulerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return Response.status(Status.BAD_REQUEST).entity("ScheduleMessage did not schedule").build();
+		} else {
+			return Response.status(Status.FORBIDDEN).build();
 		}
-
-		scheduleMessage.realm = userToken.getRealm();
-		scheduleMessage.sourceCode = userToken.getUserCode(); // force
-		scheduleMessage.token = userToken.getToken();
-		scheduleMessage.persist();
-
-		
-		log.info("Persisting new Schedule-> "+scheduleMessage.code+":"+scheduleMessage.triggertime+" from "+scheduleMessage.sourceCode);
-		
-		try {
-			uniqueScheduleCode = taskBean.addSchedule(scheduleMessage, userToken);
-			URI uri = uriInfo.getAbsolutePathBuilder().path(ScheduleResource.class, "findById")
-					.build(scheduleMessage.id);
-			return Response.created(uri).entity(uniqueScheduleCode).build();
-
-		} catch (SchedulerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return Response.status(Status.BAD_REQUEST).entity("ScheduleMessage did not schedule").build();
-
 	}
 
 	@Path("/code/{code}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findByCode(@PathParam("code") final String code) {
-		GennyToken userToken = new GennyToken(accessToken.getRawToken());
-		log.info("User is " + userToken.getEmail());
-		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
-			log.error(userToken.getUserCode() + " has no authority to schedule");
-			// return Response.status(Status.FORBIDDEN).entity("No authority to
-			// schedule").build();
-		}
+		List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+		if ((authHeaders != null) && (!authHeaders.isEmpty())) {
+			String token = authHeaders.get(0);
 
-		QScheduleMessage scheduleMessage = QScheduleMessage.findByCode(code);
-		if (scheduleMessage == null) {
-			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with code of " + code + " does not exist.")
-					.build();
-		}
-		if (scheduleMessage.realm != userToken.getRealm()) {
-			return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with bad realm")
-					.build();
-		}
+			GennyToken userToken = new GennyToken(token);
+			log.info("User is " + userToken.getEmail());
+			if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
+				log.error(userToken.getUserCode() + " has no authority to schedule");
+				// return Response.status(Status.FORBIDDEN).entity("No authority to
+				// schedule").build();
+			}
 
-		return Response.status(Status.OK).entity(scheduleMessage).build();
+			QScheduleMessage scheduleMessage = QScheduleMessage.findByCode(code);
+			if (scheduleMessage == null) {
+				return Response.status(Status.NOT_FOUND)
+						.entity("ScheduleMessage with code of " + code + " does not exist.")
+						.build();
+			}
+			if (scheduleMessage.realm != userToken.getRealm()) {
+				return Response.status(Status.NOT_FOUND).entity("ScheduleMessage with bad realm")
+						.build();
+			}
+
+			return Response.status(Status.OK).entity(scheduleMessage).build();
+		} else {
+return Response.status(Status.FORBIDDEN).build();
+		}
 	}
 	
 	@Path("/id/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findById(@PathParam("id") final Long id) {
-		GennyToken userToken = new GennyToken(accessToken.getRawToken());
+				List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+		if ((authHeaders != null) && (!authHeaders.isEmpty())) {
+			String token = authHeaders.get(0);
+
+		GennyToken userToken = new GennyToken(token);
 		log.info("User is " + userToken.getEmail());
 		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
 			log.error(userToken.getUserCode() + " has no authority to schedule");
@@ -154,13 +177,20 @@ public class ScheduleResource {
 		}
 
 		return Response.status(Status.OK).entity(scheduleMessage).build();
+				} else {
+return Response.status(Status.FORBIDDEN).build();
+		}
 	}
 
 	@Path("/{id}")
 	@DELETE
 	@Transactional
 	public Response deleteSchedule(@PathParam("id") final Long id) {
-		GennyToken userToken = new GennyToken(accessToken.getRawToken());
+						List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+		if ((authHeaders != null) && (!authHeaders.isEmpty())) {
+			String token = authHeaders.get(0);
+
+		GennyToken userToken = new GennyToken(token);
 		log.info("User is " + userToken.getEmail());
 		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
 			log.error(userToken.getUserCode() + " has no authority to schedule");
@@ -203,13 +233,20 @@ public class ScheduleResource {
 		}
 
 		return Response.status(Status.OK).build();
+				} else {
+return Response.status(Status.FORBIDDEN).build();
+		}
 	}
 
 	@Path("/code/{code}")
 	@DELETE
 	@Transactional
 	public Response deleteSchedule(@PathParam("code") final String code) {
-		GennyToken userToken = new GennyToken(accessToken.getRawToken());
+						List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+		if ((authHeaders != null) && (!authHeaders.isEmpty())) {
+			String token = authHeaders.get(0);
+
+		GennyToken userToken = new GennyToken(token);
 		log.info("User is " + userToken.getEmail());
 		if (!(userToken.hasRole("admin") || userToken.hasRole("service") || userToken.hasRole("dev"))) {
 			log.error(userToken.getUserCode() + " has no authority to schedule");
@@ -245,6 +282,9 @@ public class ScheduleResource {
 			return Response.status(Status.OK).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).build();
+		}
+						} else {
+return Response.status(Status.FORBIDDEN).build();
 		}
 	}
 
