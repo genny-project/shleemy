@@ -35,3 +35,5 @@ pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
 shleemy-git.properties
+/.apt_generated/
+/.apt_generated_tests/

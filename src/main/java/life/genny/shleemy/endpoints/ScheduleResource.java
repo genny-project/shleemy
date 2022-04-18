@@ -1,7 +1,9 @@
 package life.genny.shleemy.endpoints;
 
+import io.quarkus.runtime.ShutdownEvent;
+import io.quarkus.runtime.StartupEvent;
+import io.quarkus.security.identity.SecurityIdentity;
 import java.net.URI;
-
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -18,19 +20,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-
+import life.genny.shleemy.models.GennyToken;
+import life.genny.shleemy.models.QScheduleMessage;
+import life.genny.shleemy.quartz.TaskBean;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.quartz.SchedulerException;
 
-import io.quarkus.runtime.ShutdownEvent;
-import io.quarkus.runtime.StartupEvent;
-import io.quarkus.security.identity.SecurityIdentity;
-import life.genny.shleemy.models.GennyToken;
-import life.genny.shleemy.models.QScheduleMessage;
-import life.genny.shleemy.quartz.TaskBean;
+
+
 
 @Path("/api/schedule")
 @Produces(MediaType.APPLICATION_JSON)
@@ -41,6 +41,19 @@ public class ScheduleResource {
 
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
+
+		@ConfigProperty(name = "quarkus.oidc.realm", defaultValue = "internmatch")
+	String realm;
+
+	@ConfigProperty(name = "quarkus.oidc.auth-server-url", defaultValue = "https://keycloak.gada.io/auth")
+	String keycloakUrl;
+
+		@ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "mentormatch")
+	String clientId;
+
+		@ConfigProperty(name = "quarkus.oidc.credentials.secret", defaultValue = "")
+	String secret;
+
 
 	@Inject
 	SecurityIdentity securityIdentity;
@@ -238,6 +251,11 @@ public class ScheduleResource {
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("ScheduleResource Endpoint starting");
+
+		log.info("realm="+realm);
+		log.info("keycloakUrl=" + keycloakUrl);
+		log.info("clientId=" + clientId);
+		log.info("secret="+secret);
 
 	}
 
