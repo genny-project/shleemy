@@ -2,7 +2,6 @@ package life.genny.shleemy.endpoints;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-import io.quarkus.security.identity.SecurityIdentity;
 import java.net.URI;
 import java.util.List;
 import javax.enterprise.event.Observes;
@@ -56,8 +55,8 @@ public class ScheduleResource {
 	// String secret;
 
 
-	@Inject
-	SecurityIdentity securityIdentity;
+	// @Inject
+	// SecurityIdentity securityIdentity;
 
 	@Context 
 	HttpHeaders headers;
